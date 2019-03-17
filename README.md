@@ -250,3 +250,210 @@ public class GreetingResourceTest {
 }
 ```
 
+## Start with Hot Roadding
+
+following execute command.
+```
+# mvn compile quarkus:dev
+```
+
+execute other terminal
+```
+# curl http://localhost:8080/hoge
+hoge
+```
+
+## Build ant Run binary file
+
+'mvn compile quarkus:dev' terminal Ctrl + C.
+execute command, and wait 5 to 10 minuts.
+```
+# mvn package -Pnative -Dnative-image.docker-build=true
+```
+
+Notice. 
+I use Azure VM Size : Standard B1ms (1 VCPU, 2 GB Memory)
+Perhaps, not enough RAM Size.
+```
+# There is insufficient memory for the Java Runtime Environment to continue.
+# Native memory allocation (mmap) failed to map 210980864 bytes for committing reserved memory.
+# An error report file with more information is saved as:
+# /project/hs_err_pid6.log
+GraalVM 1.0.0-rc12 warning: INFO: os::commit_memory(0x00000000ea5e0000, 210980864, 0) failed; error='Cannot allocate memory' (errno=12)
+Error: Image building with exit status 1
+```
+
+Chage VM Size : Standard A2 (2 VCPU、3.5 GB Memory)
+
+Retry.
+```
+# mvn package -Pnative -Dnative-image.docker-build=true
+```
+
+Result, No problem.
+```
+[getting-started-1.0-SNAPSHOT-runner:6]     universe:   1,864.64 ms
+[getting-started-1.0-SNAPSHOT-runner:6]      (parse):  17,877.77 ms
+[getting-started-1.0-SNAPSHOT-runner:6]     (inline):  12,603.62 ms
+[getting-started-1.0-SNAPSHOT-runner:6]    (compile):  92,796.47 ms
+[getting-started-1.0-SNAPSHOT-runner:6]      compile: 126,142.67 ms
+[getting-started-1.0-SNAPSHOT-runner:6]        image:   7,102.91 ms
+[getting-started-1.0-SNAPSHOT-runner:6]        write:   1,452.43 ms
+[getting-started-1.0-SNAPSHOT-runner:6]      [total]: 271,459.77 ms
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  05:24 min
+[INFO] Finished at: 2019-03-17T03:19:09Z
+[INFO] ------------------------------------------------------------------------
+```
+
+following target directory.
+```
+root@GraalVM:~/getting-started# ls -la target/
+total 19812
+drwxr-xr-x 14 root root     4096 Mar 17 03:19 .
+drwxr-xr-x  4 root root     4096 Mar 17 02:33 ..
+drwxr-xr-x  4 root root     4096 Mar 17 02:51 classes
+drwxr-xr-x  3 root root     4096 Mar 17 02:34 generated-sources
+drwxr-xr-x  3 root root     4096 Mar 17 02:45 generated-test-sources
+-rwxr-xr-x  1 root root 20112728 Mar 17 03:19 getting-started-1.0-SNAPSHOT-runner
+-rw-r--r--  1 root root    33987 Mar 17 03:14 getting-started-1.0-SNAPSHOT-runner.jar
+-rw-r--r--  1 root root     5504 Mar 17 03:14 getting-started-1.0-SNAPSHOT.jar
+-rw-r--r--  1 root root    61061 Mar 17 02:57 hs_err_pid6.log
+drwxr-xr-x  2 root root     4096 Mar 17 03:14 lib
+drwxr-xr-x  2 root root     4096 Mar 17 02:51 maven-archiver
+drwxr-xr-x  3 root root     4096 Mar 17 02:34 maven-status
+-rw-r--r--  1 root root     4664 Mar 17 03:14 quarkus.log
+drwxr-xr-x  2 root root     4096 Mar 17 03:16 reports
+drwxr-xr-x  2 root root     4096 Mar 17 02:45 surefire-reports
+drwxr-xr-x  6 root root     4096 Mar 17 02:45 test-classes
+drwxr-xr-x  2 root root     4096 Mar 17 02:51 transformed-classes
+drwxr-xr-x  6 root root     4096 Mar 17 02:51 wiring-classes
+drwxr-xr-x  4 root root     4096 Mar 17 02:34 wiring-devmode
+root@GraalVM:~/getting-started#
+```
+
+execute created binary file
+```
+# ./target/getting-started-1.0-SNAPSHOT-runner
+2019-03-17 03:24:01,777 INFO  [io.quarkus] (main) Quarkus 0.11.0 started in 0.004s. Listening on: http://127.0.0.1:8080
+2019-03-17 03:24:01,783 INFO  [io.quarkus] (main) Installed features: [cdi, resteasy]
+```
+
+confirm using curl command
+```
+# curl http://localhost:8080/hoge
+hoge
+```
+
+first curl comannd execuete slowly a little. but it is acceptable.
+
+## Build and Run Docker Image
+
+Build Docker image 
+```
+# cd getting-started
+# docker build -f src/main/docker/Dockerfile -t eternalhoge/quarkus-firsttry:1.0 .
+# docker images
+REPOSITORY                                  TAG                 IMAGE ID            CREATED             SIZE
+eternalhoge/quarkus-firsttry                1.0                 54583f7aeeca        17 seconds ago      125MB
+registry.fedoraproject.org/fedora-minimal   latest              f0c38118c459        3 weeks ago         105MB
+swd847/centos-graal-native-image-rc12       latest              83f953b63220        4 weeks ago         1.14GB
+```
+
+Run Docker Container
+```
+# docker run -i --rm -p 8080:8080 eternalhoge/quarkus-firsttry:1.0
+2019-03-17 03:39:38,596 INFO  [io.quarkus] (main) Quarkus 0.11.0 started in 0.002s. Listening on: http://0.0.0.0:8080
+2019-03-17 03:39:38,596 INFO  [io.quarkus] (main) Installed features: [cdi, resteasy]
+```
+
+docker container started in 0.002s. Although the standard HDD of Azure VM is not fast, startup is still fast.
+alse, first curl comannd execuete is faster than simple binary.
+
+run detach.
+```
+# docker run -d --rm -p 8080:8080 eternalhoge/quarkus-firsttry:1.0
+96269900991cd8b537c4846aa1c9f12caffd974e063908d2bb1fceda8297d3b2
+```
+
+confirm docker container status.
+```
+# docker ps -a
+CONTAINER ID        IMAGE                              COMMAND                  CREATED              STATUS              PORTS                    NAMES
+96269900991c        eternalhoge/quarkus-firsttry:1.0   "./application -Dqua…"   About a minute ago   Up About a minute   0.0.0.0:8080->8080/tcp   wonderful_jones
+```
+
+after stopping the container, can not see the list of containers. 
+```
+root@GraalVM:~/getting-started# docker stop 96269900991c
+96269900991c
+root@GraalVM:~/getting-started# docker ps -a
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+root@GraalVM:~/getting-started#
+```
+
+## Quakus executions list and add execution
+
+```
+root@GraalVM:~/getting-started# mvn quarkus:list-extensions
+[INFO] Scanning for projects...
+[INFO]
+[INFO] ----------------------< jp.acme:getting-started >-----------------------
+[INFO] Building getting-started 1.0-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- quarkus-maven-plugin:0.11.0:list-extensions (default-cli) @ getting-started ---
+[INFO] Available extensions:
+[INFO]   * Agroal - Database connection pool (io.quarkus:quarkus-agroal)
+[INFO]   * Arc (io.quarkus:quarkus-arc)
+[INFO]   * AWS Lambda (io.quarkus:quarkus-amazon-lambda)
+[INFO]   * Camel Core (io.quarkus:quarkus-camel-core)
+[INFO]   * Camel Infinispan (io.quarkus:quarkus-camel-infinispan)
+[INFO]   * Camel Netty4 HTTP (io.quarkus:quarkus-camel-netty4-http)
+[INFO]   * Camel Salesforce (io.quarkus:quarkus-camel-salesforce)
+[INFO]   * Eclipse Vert.x (io.quarkus:quarkus-vertx)
+[INFO]   * Hibernate ORM (io.quarkus:quarkus-hibernate-orm)
+[INFO]   * Hibernate ORM with Panache (io.quarkus:quarkus-hibernate-orm-panache)
+[INFO]   * Hibernate Validator (io.quarkus:quarkus-hibernate-validator)
+[INFO]   * Infinispan Client (io.quarkus:quarkus-infinispan-client)
+[INFO]   * JDBC Driver - H2 (io.quarkus:quarkus-jdbc-h2)
+[INFO]   * JDBC Driver - MariaDB (io.quarkus:quarkus-jdbc-mariadb)
+[INFO]   * JDBC Driver - PostgreSQL (io.quarkus:quarkus-jdbc-postgresql)
+[INFO]   * Kotlin (io.quarkus:quarkus-kotlin)
+[INFO]   * Narayana JTA - Transaction manager (io.quarkus:quarkus-narayana-jta)
+[INFO]   * RESTEasy (io.quarkus:quarkus-resteasy)
+[INFO]   * RESTEasy - JSON-B (io.quarkus:quarkus-resteasy-jsonb)
+[INFO]   * Scheduler (io.quarkus:quarkus-scheduler)
+[INFO]   * Security (io.quarkus:quarkus-elytron-security)
+[INFO]   * SmallRye Fault Tolerance (io.quarkus:quarkus-smallrye-fault-tolerance)
+[INFO]   * SmallRye Health (io.quarkus:quarkus-smallrye-health)
+[INFO]   * SmallRye JWT (io.quarkus:quarkus-smallrye-jwt)
+[INFO]   * SmallRye Metrics (io.quarkus:quarkus-smallrye-metrics)
+[INFO]   * SmallRye OpenAPI (io.quarkus:quarkus-smallrye-openapi)
+[INFO]   * SmallRye OpenTracing (io.quarkus:quarkus-smallrye-opentracing)
+[INFO]   * SmallRye Reactive Messaging (io.quarkus:quarkus-smallrye-reactive-messaging)
+[INFO]   * SmallRye Reactive Messaging - Kafka Connector (io.quarkus:quarkus-smallrye-reactive-messaging-kafka)
+[INFO]   * SmallRye Reactive Streams Operators (io.quarkus:quarkus-smallrye-reactive-streams-operators)
+[INFO]   * SmallRye Reactive Type Converters (io.quarkus:quarkus-smallrye-reactive-type-converters)
+[INFO]   * SmallRye REST Client (io.quarkus:quarkus-smallrye-rest-client)
+[INFO]   * Spring DI compatibility layer (io.quarkus:quarkus-spring-di)
+[INFO]   * Undertow (io.quarkus:quarkus-undertow)
+[INFO]   * Undertow WebSockets (io.quarkus:quarkus-undertow-websockets)
+[INFO]
+Add an extension to your project by adding the dependency to your project or use `mvn quarkus:add-extension -Dextensions="name"`
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  6.661 s
+[INFO] Finished at: 2019-03-17T03:57:28Z
+[INFO] ------------------------------------------------------------------------
+```
+
+add camel core extention.
+```
+# mvn quarkus:add-extension -Dextensions="io.quarkus:quarkus-camel-core"
+```
+
+
