@@ -310,7 +310,7 @@ Result, No problem.
 
 following target directory.
 ```
-root@GraalVM:~/getting-started# ls -la target/
+# ls -la target/
 total 19812
 drwxr-xr-x 14 root root     4096 Mar 17 03:19 .
 drwxr-xr-x  4 root root     4096 Mar 17 02:33 ..
@@ -331,7 +331,6 @@ drwxr-xr-x  6 root root     4096 Mar 17 02:45 test-classes
 drwxr-xr-x  2 root root     4096 Mar 17 02:51 transformed-classes
 drwxr-xr-x  6 root root     4096 Mar 17 02:51 wiring-classes
 drwxr-xr-x  4 root root     4096 Mar 17 02:34 wiring-devmode
-root@GraalVM:~/getting-started#
 ```
 
 execute created binary file
@@ -387,17 +386,16 @@ CONTAINER ID        IMAGE                              COMMAND                  
 
 after stopping the container, can not see the list of containers. 
 ```
-root@GraalVM:~/getting-started# docker stop 96269900991c
+# docker stop 96269900991c
 96269900991c
-root@GraalVM:~/getting-started# docker ps -a
+# docker ps -a
 CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
-root@GraalVM:~/getting-started#
 ```
 
 ## Quakus executions list and add execution
 
 ```
-root@GraalVM:~/getting-started# mvn quarkus:list-extensions
+# mvn quarkus:list-extensions
 [INFO] Scanning for projects...
 [INFO]
 [INFO] ----------------------< jp.acme:getting-started >-----------------------
